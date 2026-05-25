@@ -23,9 +23,25 @@ export default function Navbar() {
           <Link href="/cart" className="hover:text-amber-500 transition-colors">My Cart</Link>
         </div>
 
-        <Button asChild className="hidden md:flex bg-amber-500 hover:bg-amber-600 text-white">
-  <Link href="#enquiry">Order Now</Link>
-</Button>
+      <div className="hidden md:flex items-center gap-3">
+  <Button
+    asChild
+    className="bg-amber-500 hover:bg-amber-600 text-white px-4 lg:px-6"
+  >
+    <Link href="/signup">
+      Sign Up
+    </Link>
+  </Button>
+
+  <Button
+    asChild
+    className="bg-amber-500 hover:bg-amber-600 text-white px-4 lg:px-6"
+  >
+    <Link href="/login">
+      Log In
+    </Link>
+  </Button>
+</div>
 
         {/* Hamburger — mobile only */}
         <button
@@ -43,9 +59,15 @@ export default function Navbar() {
           <Link href="/" onClick={() => setIsOpen(false)}>Home</Link>
           <Link href="/about" onClick={() => setIsOpen(false)}>About</Link>
           <Link href="/cart" onClick={() => setIsOpen(false)}>My Cart</Link>
-          <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white w-full">
-  <Link href="#enquiry">Order Now</Link>
-</Button>
+  <div className="flex gap-2 w-full">
+  <button className="flex-1 bg-amber-500 text-white py-2 rounded-lg text-sm sm:text-base">
+    Sign Up
+  </button>
+
+  <button className="flex-1 bg-amber-500 text-white py-2 rounded-lg text-sm sm:text-base">
+    Log In
+  </button>
+</div>
         </div>
       )}
     </nav>
