@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { createBrowserClient } from "@supabase/ssr"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import Link from "next/link"
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get("redirect") || "/"  // ← GET REDIRECT PARAM
@@ -23,51 +23,51 @@ export default function LoginPage() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   )
 
- async function handleLogin() {
-  if (!email || !password) {
-    setError("Please enter email and password.")
-    return
-  }
+  async function handleLogin() {
+    if (!email || !password) {
+      setError("Please enter email and password.")
+      return
+    }
 
-  setLoading(true)
-  setError("")
+    setLoading(true)
+    setError("")
 
-  const { data, error: loginError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-  if (loginError) {
-    setError("Invalid email or password.")
+    if (loginError) {
+      setError("Invalid email or password.")
+      setLoading(false)
+      return
+    }
+
+    // CRITICAL: Wait for session to be fully established
+    // Get session explicitly to ensure cookie is set
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
+      setError("Session not established. Try again.")
+      setLoading(false)
+      return
+    }
+
+    // Now check role and redirect
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .single()
+
     setLoading(false)
-    return
+
+    if (profile?.role === "admin") {
+      window.location.replace("/admin")
+    } else {
+      window.location.replace(redirect)
+    }
   }
-
-  // CRITICAL: Wait for session to be fully established
-  // Get session explicitly to ensure cookie is set
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (!session) {
-    setError("Session not established. Try again.")
-    setLoading(false)
-    return
-  }
-
-  // Now check role and redirect
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .single()
-
-  setLoading(false)
-
-if (profile?.role === "admin") {
-  window.location.replace("/admin")
-} else {
-  window.location.replace(redirect)
-}
-}
 
   return (
     <main className="min-h-screen bg-amber-50 flex items-center justify-center px-6">
@@ -116,6 +116,27 @@ if (profile?.role === "admin") {
         </CardContent>
       </Card>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-amber-50 flex items-center justify-center px-6">
+        <Card className="w-full max-w-md border-stone-100 shadow-sm">
+          <CardContent className="p-8 flex flex-col gap-6 items-center justify-center min-h-[350px]">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-stone-800">
+                Crumb <span className="text-amber-500">&</span> Co.
+              </h1>
+              <p className="text-stone-500 text-sm mt-2">Loading...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
 
