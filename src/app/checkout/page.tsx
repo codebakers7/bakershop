@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { createBrowserClient } from "@supabase/ssr"
 
 export default function CheckoutPage() {
   const router = useRouter()
   const [error, setError] = useState("")
   const [showOptions, setShowOptions] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
     const cart = localStorage.getItem("cart")
@@ -16,14 +18,26 @@ export default function CheckoutPage() {
       return
     }
     
-    // Check if user is logged in
+    // Check if user is actually logged in
     checkUser()
   }, [router])
 
   async function checkUser() {
-    // For now, show options immediately
-    // Later: check Supabase session
-    setShowOptions(true)
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (session?.user) {
+      // User is logged in — auto-redirect to Stripe
+      setIsLoggedIn(true)
+      await createStripeSession()
+    } else {
+      // User is guest — show options
+      setShowOptions(true)
+    }
   }
 
   async function guestCheckout() {
@@ -47,9 +61,11 @@ export default function CheckoutPage() {
         window.location.href = data.url
       } else {
         setError("Failed to create checkout")
+        setShowOptions(true) // Show options again if failed
       }
     } catch (_err) {
       setError("Something went wrong")
+      setShowOptions(true)
     }
   }
 
@@ -81,9 +97,10 @@ export default function CheckoutPage() {
               Continue as Guest
             </button>
             
-            <Link
+            {/* FIX: /login not /auth/login */}
+            <Link 
               href="/login?redirect=/checkout"
-              className="w-full border border-stone-300 text-stone-700 py-3 rounded-xl font-medium hover:bg-stone-50"
+              className="w-full border border-stone-300 text-stone-700 py-3 rounded-xl font-medium hover:bg-stone-50 block"
             >
               Login for Faster Checkout
             </Link>
@@ -93,6 +110,19 @@ export default function CheckoutPage() {
     )
   }
 
+  // Logged-in users see loading spinner while Stripe session creates
+  if (isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900 mx-auto mb-4"></div>
+          <p className="text-stone-600">Preparing your checkout...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Default loading state
   return (
     <div className="min-h-screen bg-stone-50 flex items-center justify-center">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-900"></div>
