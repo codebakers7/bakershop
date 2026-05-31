@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase"
 import ProductCard from "@/components/ProductCard"
 import CategoryNav from "@/components/CategoryNav"
+import HeroSection from "@/components/HeroSection"
+import HeroSection1 from "@/components/HeroSection1"
+
 
 export default async function HomePage() {
   const supabase = createClient()
@@ -12,16 +15,14 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-stone-50">
-      <section className="bg-stone-900 text-white py-16 px-6">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold">Crumb & Co. Bakery</h1>
-          <p className="mt-4 text-stone-400 text-lg">Fresh baked daily since 1987</p>
-        </div>
-      </section>
+      {/* <HeroSection /> */}
+      <HeroSection1 />
+
+    
 
       <CategoryNav active="all" />
 
-      <section className="py-12 px-6">
+      <section id="products" className="py-12 px-6">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl font-bold text-stone-800 mb-8">Our Products</h2>
           
